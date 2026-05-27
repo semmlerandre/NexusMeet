@@ -8,6 +8,7 @@ FRONTEND_PORT_DEFAULT="3000"
 BIND_ADDRESS_DEFAULT="127.0.0.1"
 INSTALL_NPM="ask"
 ORIGINAL_ARGS=("$@")
+REQUIRED_PACKAGES=(ca-certificates curl git gnupg lsb-release openssl iproute2)
 
 usage() {
   cat <<EOF
@@ -106,9 +107,31 @@ random_secret() {
   openssl rand -hex 32
 }
 
+package_installed() {
+  local package="$1"
+  dpkg-query -W -f='${Status}' "$package" 2>/dev/null | grep -q "install ok installed"
+}
+
+ensure_dpkg_ready() {
+  if dpkg --audit | grep -q .; then
+    warn "dpkg has interrupted packages; repairing before continuing."
+    dpkg --configure -a
+  fi
+
+  apt-get install -f -y
+}
+
 systemd_unit_exists() {
   local unit="$1"
   systemctl list-unit-files "$unit" >/dev/null 2>&1 || systemctl status "$unit" >/dev/null 2>&1
+}
+
+install_docker_engine() {
+  log "Installing Docker Engine"
+  curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
+  sh /tmp/get-docker.sh
+  rm -f /tmp/get-docker.sh
+  ok "Docker Engine installed"
 }
 
 start_docker_daemon() {
@@ -127,14 +150,41 @@ start_docker_daemon() {
     warn "Docker command exists, but no known systemd service was found."
   fi
 
+  if ! docker info >/dev/null 2>&1; then
+    warn "Docker daemon did not start; reinstalling/repairing Docker Engine."
+    install_docker_engine
+    if systemd_unit_exists docker.service; then
+      systemctl enable docker >/dev/null 2>&1 || true
+      systemctl start docker
+    fi
+  fi
+
   docker info >/dev/null 2>&1 || fail "Docker daemon is not running. Check it with: systemctl status docker or systemctl status snap.docker.dockerd"
   ok "Docker daemon is running"
 }
 
-install_base_packages() {
-  log "Installing base packages"
-  apt-get update
-  apt-get install -y ca-certificates curl git gnupg lsb-release openssl iproute2
+ensure_base_packages() {
+  log "Checking base prerequisites"
+  ensure_dpkg_ready
+
+  local missing_packages=()
+  local package
+
+  for package in "${REQUIRED_PACKAGES[@]}"; do
+    if package_installed "$package"; then
+      ok "$package already installed"
+    else
+      missing_packages+=("$package")
+    fi
+  done
+
+  if [[ "${#missing_packages[@]}" -gt 0 ]]; then
+    log "Installing missing packages: ${missing_packages[*]}"
+    apt-get update
+    apt-get install -y "${missing_packages[@]}"
+  else
+    ok "All base prerequisites are installed"
+  fi
 }
 
 install_docker_if_needed() {
@@ -142,16 +192,13 @@ install_docker_if_needed() {
   if command -v docker >/dev/null 2>&1; then
     ok "Docker already installed: $(docker --version)"
   else
-    curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
-    sh /tmp/get-docker.sh
-    rm -f /tmp/get-docker.sh
-    ok "Docker installed"
+    install_docker_engine
   fi
 
   start_docker_daemon
 
   if docker compose version >/dev/null 2>&1 || command -v docker-compose >/dev/null 2>&1; then
-    ok "Docker Compose available"
+    ok "Docker Compose available: $(compose version)"
   else
     log "Installing Docker Compose plugin"
     if ! apt-get install -y docker-compose-plugin; then
@@ -241,7 +288,7 @@ EOF
 
 main() {
   log "Starting production installation on ${PRETTY_NAME:-Linux}"
-  install_base_packages
+  ensure_base_packages
   install_docker_if_needed
 
   local frontend_port
