@@ -1,0 +1,76 @@
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: nexusmeet-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:?MONGO_ROOT_PASSWORD is required}
+      MONGO_INITDB_DATABASE: ${DB_NAME:-sala_reservas}
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - nexusmeet-network
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet -u \"$${MONGO_INITDB_ROOT_USERNAME}\" -p \"$${MONGO_INITDB_ROOT_PASSWORD}\" --authenticationDatabase admin --eval 'db.adminCommand({ ping: 1 }).ok' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nexusmeet-backend
+    restart: unless-stopped
+    environment:
+      MONGO_URL: mongodb://admin:${MONGO_ROOT_PASSWORD:?MONGO_ROOT_PASSWORD is required}@mongodb:27017/?authSource=admin
+      DB_NAME: ${DB_NAME:-sala_reservas}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      JWT_EXPIRATION_HOURS: ${JWT_EXPIRATION_HOURS:-24}
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
+      SMTP_SERVER: ${SMTP_SERVER:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL:-}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME:-Sistema de Reservas}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    volumes:
+      - backend_uploads:/app/uploads
+    networks:
+      - nexusmeet-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8001/api/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        REACT_APP_BACKEND_URL: ${REACT_APP_BACKEND_URL:-}
+    container_name: nexusmeet-frontend
+    restart: unless-stopped
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:${FRONTEND_PORT:-3000}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - nexusmeet-network
+
+volumes:
+  mongo_data:
+  backend_uploads:
+
+networks:
+  nexusmeet-network:
+    name: nexusmeet-network
+    driver: bridge

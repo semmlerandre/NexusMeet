@@ -1,0 +1,136 @@
+{
+  "brand_identity": {
+    "name": "NexusMeet",
+    "voice": "Professional, Efficient, Organized, Trustworthy",
+    "archetype": "The Performance Pro (Corporate Edition)",
+    "description": "A high-performance booking system that values time and clarity above all else."
+  },
+  "typography": {
+    "font_family": {
+      "headings": "Outfit, sans-serif",
+      "body": "Inter, sans-serif",
+      "mono": "JetBrains Mono, monospace"
+    },
+    "scale": {
+      "h1": "text-4xl md:text-5xl font-bold tracking-tight",
+      "h2": "text-3xl font-semibold tracking-tight",
+      "h3": "text-2xl font-semibold",
+      "body": "text-base leading-relaxed text-slate-600 dark:text-slate-300",
+      "small": "text-sm font-medium text-slate-500"
+    },
+    "installation": "Import 'Outfit' and 'Inter' from Google Fonts in index.css"
+  },
+  "colors": {
+    "theme_mode": "system",
+    "palette": {
+      "primary": {
+        "DEFAULT": "#1e293b",
+        "foreground": "#ffffff",
+        "description": "Deep Slate/Indigo - Authority & Stability"
+      },
+      "secondary": {
+        "DEFAULT": "#f1f5f9",
+        "foreground": "#0f172a",
+        "description": "Slate 100 - Supporting surfaces"
+      },
+      "accent": {
+        "DEFAULT": "#3b82f6",
+        "foreground": "#ffffff",
+        "description": "Electric Blue - Action & Focus"
+      },
+      "background": {
+        "light": "#ffffff",
+        "dark": "#020617"
+      },
+      "success": "#10b981",
+      "warning": "#f59e0b",
+      "error": "#ef4444",
+      "info": "#0ea5e9"
+    },
+    "gradients": {
+      "dashboard_header": "bg-gradient-to-r from-slate-900 to-slate-800",
+      "active_state": "bg-blue-50/50 dark:bg-blue-900/20"
+    }
+  },
+  "layout_strategies": {
+    "dashboard_grid": {
+      "type": "Bento Grid Mode B",
+      "classes": "grid grid-cols-1 md:grid-cols-4 gap-6 p-6",
+      "rules": [
+        "Sidebar: Fixed width 280px (desktop), collapsible (mobile)",
+        "Main Content: Flex-1, max-width-7xl mx-auto",
+        "Widgets: h-full w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-sm"
+      ]
+    },
+    "spacing": {
+      "container_padding": "p-6 md:p-8 lg:p-12",
+      "section_gap": "gap-8",
+      "internal_card_padding": "p-6"
+    }
+  },
+  "components": {
+    "cards": {
+      "style": "clean",
+      "classes": "bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 shadow-sm rounded-xl overflow-hidden transition-all hover:shadow-md",
+      "hover": "hover:border-blue-200 dark:hover:border-blue-900"
+    },
+    "buttons": {
+      "primary": "bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-md font-medium transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary",
+      "secondary": "bg-secondary text-secondary-foreground hover:bg-secondary/80 h-10 px-4 py-2 rounded-md font-medium",
+      "ghost": "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
+    },
+    "inputs": {
+      "base": "flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+    },
+    "status_badges": {
+      "available": "bg-emerald-100 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full text-xs font-medium",
+      "occupied": "bg-rose-100 text-rose-700 border border-rose-200 px-2.5 py-0.5 rounded-full text-xs font-medium",
+      "maintenance": "bg-amber-100 text-amber-700 border border-amber-200 px-2.5 py-0.5 rounded-full text-xs font-medium"
+    }
+  },
+  "visual_enhancers": {
+    "glassmorphism": {
+      "modals": "bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl border border-white/20 shadow-2xl",
+      "overlay": "bg-black/40 backdrop-blur-sm"
+    },
+    "shadows": {
+      "card": "shadow-[0_1px_3px_0_rgba(0,0,0,0.1),0_1px_2px_-1px_rgba(0,0,0,0.1)]",
+      "floating": "shadow-[0_20px_25px_-5px_rgba(0,0,0,0.1),0_8px_10px_-6px_rgba(0,0,0,0.1)]"
+    }
+  },
+  "assets": {
+    "images": {
+      "login_bg": "https://images.unsplash.com/photo-1749310726959-d8fccfef7ee4?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODh8MHwxfHNlYXJjaHwxfHxtaW5pbWFsaXN0JTIwY29ycG9yYXRlJTIwb2ZmaWNlJTIwbG9iYnl8ZW58MHx8fHwxNzcyNTM5MTE1fDA&ixlib=rb-4.1.0&q=85",
+      "room_thumbnails": [
+        "https://images.unsplash.com/photo-1646215993365-125e6428e1dc?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODd8MHwxfHNlYXJjaHw0fHxtb2Rlcm4lMjBjb25mZXJlbmNlJTIwcm9vbSUyMGdsYXNzJTIwd2FsbHN8ZW58MHx8fHwxNzcyNTM5MDk1fDA&ixlib=rb-4.1.0&q=85",
+        "https://images.unsplash.com/photo-1636125657985-7384a5478f5a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODd8MHwxfHNlYXJjaHwyfHxtb2Rlcm4lMjBjb25mZXJlbmNlJTIwcm9vbSUyMGdsYXNzJTIwd2FsbHN8ZW58MHx8fHwxNzcyNTM5MDk1fDA&ixlib=rb-4.1.0&q=85",
+        "https://images.unsplash.com/photo-1745970649957-b4b1f7fde4ea?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODd8MHwxfHNlYXJjaHwxfHxtb2Rlcm4lMjBjb25mZXJlbmNlJTIwcm9vbSUyMGdsYXNzJTIwd2FsbHN8ZW58MHx8fHwxNzcyNTM5MDk1fDA&ixlib=rb-4.1.0&q=85"
+      ],
+      "placeholders": {
+        "user_avatar": "https://ui.shadcn.com/avatars/04.png"
+      }
+    },
+    "icons": {
+      "library": "lucide-react",
+      "style": "stroke-width=1.5"
+    }
+  },
+  "instructions_to_main_agent": [
+    "Install 'lucide-react' and 'recharts' if not present.",
+    "Use 'sonner' for all notifications.",
+    "Ensure all forms use 'react-hook-form' with 'zod' validation.",
+    "Implement a 'DashboardLayout' component that handles the sidebar and header state.",
+    "For the 'Calendar' view, use a custom grid implementation or a lightweight library like 'react-big-calendar' customized with Tailwind classes.",
+    "Admin dashboard must distinguish itself from User dashboard via more data-dense widgets.",
+    "Use 'data-testid' on all interactive elements.",
+    "DO NOT use gradients for text. Keep text solid for maximum readability."
+  ],
+  "universal_guidelines": [
+    "Don't make generic centered layouts. Use left-align for forms and data.",
+    "Create depth through layered design elements with z-index hierarchy.",
+    "Use 2-3x more spacing than feels comfortable. Cramped designs look cheap.",
+    "Every interaction needs micro-animations - hover states, transitions.",
+    "Avoid default 'SaaS Blue' where possible; use the defined 'Deep Slate' and 'Electric Blue' palette.",
+    "Dark mode should not be pitch black (#000000), use slate-950 (#020617)."
+  ]
+}
