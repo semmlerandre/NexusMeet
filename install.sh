@@ -106,6 +106,31 @@ random_secret() {
   openssl rand -hex 32
 }
 
+systemd_unit_exists() {
+  local unit="$1"
+  systemctl list-unit-files "$unit" >/dev/null 2>&1 || systemctl status "$unit" >/dev/null 2>&1
+}
+
+start_docker_daemon() {
+  if docker info >/dev/null 2>&1; then
+    ok "Docker daemon is running"
+    return 0
+  fi
+
+  if systemd_unit_exists docker.service; then
+    systemctl enable docker >/dev/null 2>&1 || true
+    systemctl start docker
+  elif systemd_unit_exists snap.docker.dockerd.service; then
+    systemctl enable snap.docker.dockerd.service >/dev/null 2>&1 || true
+    systemctl start snap.docker.dockerd.service
+  else
+    warn "Docker command exists, but no known systemd service was found."
+  fi
+
+  docker info >/dev/null 2>&1 || fail "Docker daemon is not running. Check it with: systemctl status docker or systemctl status snap.docker.dockerd"
+  ok "Docker daemon is running"
+}
+
 install_base_packages() {
   log "Installing base packages"
   apt-get update
@@ -123,8 +148,7 @@ install_docker_if_needed() {
     ok "Docker installed"
   fi
 
-  systemctl enable docker >/dev/null 2>&1 || true
-  systemctl start docker
+  start_docker_daemon
 
   if docker compose version >/dev/null 2>&1 || command -v docker-compose >/dev/null 2>&1; then
     ok "Docker Compose available"
