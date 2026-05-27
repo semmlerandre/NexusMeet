@@ -9,6 +9,8 @@ BIND_ADDRESS_DEFAULT="127.0.0.1"
 INSTALL_NPM="ask"
 ORIGINAL_ARGS=("$@")
 REQUIRED_PACKAGES=(ca-certificates curl git gnupg lsb-release openssl iproute2)
+EFFECTIVE_BIND_ADDRESS=""
+EFFECTIVE_FRONTEND_PORT=""
 
 usage() {
   cat <<EOF
@@ -105,6 +107,31 @@ find_free_port() {
 
 random_secret() {
   openssl rand -hex 32
+}
+
+get_env_value() {
+  local key="$1"
+  local file="${2:-${APP_DIR}/.env}"
+  [[ -f "$file" ]] || return 1
+  grep -E "^${key}=" "$file" | tail -n 1 | cut -d '=' -f 2-
+}
+
+env_has_key() {
+  local key="$1"
+  local file="${2:-${APP_DIR}/.env}"
+  [[ -f "$file" ]] && grep -Eq "^${key}=" "$file"
+}
+
+append_env_if_missing() {
+  local key="$1"
+  local value="$2"
+  if ! env_has_key "$key"; then
+    printf "%s=%s\n" "$key" "$value" >> "${APP_DIR}/.env"
+  fi
+}
+
+server_ip() {
+  hostname -I 2>/dev/null | awk '{print $1}'
 }
 
 package_installed() {
@@ -260,9 +287,31 @@ write_env() {
   local bind_address="$2"
 
   if [[ -f "${APP_DIR}/.env" ]]; then
-    cp "${APP_DIR}/.env" "${APP_DIR}/.env.backup.$(date +%Y%m%d%H%M%S)"
-    warn "Existing .env backed up before writing production values."
+    ok "Existing .env found; preserving current secrets and port."
+    EFFECTIVE_BIND_ADDRESS="$(get_env_value BIND_ADDRESS || true)"
+    EFFECTIVE_FRONTEND_PORT="$(get_env_value FRONTEND_PORT || true)"
+    EFFECTIVE_BIND_ADDRESS="${EFFECTIVE_BIND_ADDRESS:-$bind_address}"
+    EFFECTIVE_FRONTEND_PORT="${EFFECTIVE_FRONTEND_PORT:-$frontend_port}"
+
+    append_env_if_missing "BIND_ADDRESS" "$EFFECTIVE_BIND_ADDRESS"
+    append_env_if_missing "FRONTEND_PORT" "$EFFECTIVE_FRONTEND_PORT"
+    append_env_if_missing "REACT_APP_BACKEND_URL" ""
+    append_env_if_missing "DB_NAME" "sala_reservas"
+    append_env_if_missing "MONGO_ROOT_PASSWORD" "$(random_secret)"
+    append_env_if_missing "JWT_SECRET" "$(random_secret)"
+    append_env_if_missing "JWT_EXPIRATION_HOURS" "24"
+    append_env_if_missing "CORS_ORIGINS" "*"
+    append_env_if_missing "SMTP_SERVER" ""
+    append_env_if_missing "SMTP_PORT" "587"
+    append_env_if_missing "SMTP_USER" ""
+    append_env_if_missing "SMTP_PASSWORD" ""
+    append_env_if_missing "SMTP_FROM_EMAIL" ""
+    append_env_if_missing "SMTP_FROM_NAME" "Sistema de Reservas"
+    return 0
   fi
+
+  EFFECTIVE_BIND_ADDRESS="$bind_address"
+  EFFECTIVE_FRONTEND_PORT="$frontend_port"
 
   cat > "${APP_DIR}/.env" <<EOF
 # NexusMeet production settings
@@ -286,6 +335,38 @@ SMTP_FROM_NAME=Sistema de Reservas
 EOF
 }
 
+print_deploy_info() {
+  local ip
+  ip="$(server_ip)"
+  local bind_address="${EFFECTIVE_BIND_ADDRESS:-${BIND_ADDRESS_DEFAULT}}"
+  local frontend_port="${EFFECTIVE_FRONTEND_PORT:-${FRONTEND_PORT_DEFAULT}}"
+
+  echo ""
+  echo "NexusMeet access information:"
+  echo "  Server IP: ${ip:-unknown}"
+  echo "  Local bind: ${bind_address}:${frontend_port}"
+  echo "  Local app URL: http://${bind_address}:${frontend_port}"
+  if [[ "$bind_address" == "127.0.0.1" || "$bind_address" == "localhost" ]]; then
+    echo "  Direct LAN URL: not exposed directly; use Nginx Proxy Manager."
+  else
+    echo "  Direct LAN URL: http://${ip}:${frontend_port}"
+  fi
+  echo ""
+  echo "Nginx Proxy Manager configuration:"
+  echo "  Existing NPM on this host:"
+  echo "    Scheme: http"
+  echo "    Forward Hostname/IP: 127.0.0.1"
+  echo "    Forward Port: ${frontend_port}"
+  echo "  NPM installed by this script:"
+  echo "    Scheme: http"
+  echo "    Forward Hostname/IP: nexusmeet-frontend"
+  echo "    Forward Port: 80"
+  echo ""
+  echo "Default login:"
+  echo "  Email: admin@sistema.com"
+  echo "  Password: admin123"
+}
+
 main() {
   log "Starting production installation on ${PRETTY_NAME:-Linux}"
   ensure_base_packages
@@ -298,7 +379,17 @@ main() {
   write_env "${frontend_port}" "${BIND_ADDRESS_DEFAULT}"
 
   log "Building and starting NexusMeet"
-  (cd "${APP_DIR}" && compose up -d --build)
+  if ! (cd "${APP_DIR}" && compose up -d --build); then
+    warn "Docker Compose failed. Current access settings are still shown below."
+    print_deploy_info
+    echo ""
+    echo "Useful diagnostics:"
+    echo "  docker compose ps"
+    echo "  docker compose logs mongodb"
+    echo "  docker compose logs backend"
+    echo "  docker compose logs frontend"
+    exit 1
+  fi
 
   case "${INSTALL_NPM}" in
     yes)
@@ -320,15 +411,7 @@ main() {
   esac
 
   log "Installation finished"
-  echo "Local app URL: http://${BIND_ADDRESS_DEFAULT}:${frontend_port}"
-  echo ""
-  echo "Nginx Proxy Manager configuration:"
-  echo "  If NPM is installed directly on the host, use Forward Hostname/IP: 127.0.0.1 and Forward Port: ${frontend_port}."
-  echo "  If NPM is the container installed by this script, use Forward Hostname/IP: nexusmeet-frontend and Forward Port: 80."
-  echo ""
-  echo "Default login:"
-  echo "  Email: admin@sistema.com"
-  echo "  Password: admin123"
+  print_deploy_info
   echo ""
   echo "Useful commands:"
   echo "  cd ${APP_DIR}"
