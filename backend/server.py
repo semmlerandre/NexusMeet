@@ -143,6 +143,7 @@ class BookingCreate(BaseModel):
     data_fim: Optional[str] = None
     hora_inicio: str
     hora_fim: str
+    justificativa: str
 
 class SystemConfigUpdate(BaseModel):
     smtp_enabled: bool
@@ -475,6 +476,7 @@ async def create_booking(booking_data: BookingCreate, current_user: dict = Depen
             "data": data,
             "hora_inicio": booking_data.hora_inicio,
             "hora_fim": booking_data.hora_fim,
+            "justificativa": booking_data.justificativa,
             "status": "confirmed",
             "room_name": room['nome'],
             "user_name": current_user['nome'],
@@ -610,7 +612,7 @@ async def export_report(start_date: Optional[str] = None, end_date: Optional[str
     ws.title = "Relatório de Reservas"
     
     # Cabeçalhos
-    headers = ['ID', 'Sala', 'Usuário', 'Data', 'Hora Início', 'Hora Fim', 'Status']
+    headers = ['ID', 'Sala', 'Usuário', 'Justificativa', 'Data', 'Hora Início', 'Hora Fim', 'Status']
     for col, header in enumerate(headers, start=1):
         cell = ws.cell(row=1, column=col, value=header)
         cell.font = Font(bold=True, color="FFFFFF")
@@ -622,13 +624,14 @@ async def export_report(start_date: Optional[str] = None, end_date: Optional[str
         ws.cell(row=row_idx, column=1, value=booking['id'])
         ws.cell(row=row_idx, column=2, value=booking.get('room_name', 'N/A'))
         ws.cell(row=row_idx, column=3, value=booking.get('user_name', 'N/A'))
-        ws.cell(row=row_idx, column=4, value=booking['data'])
-        ws.cell(row=row_idx, column=5, value=booking['hora_inicio'])
-        ws.cell(row=row_idx, column=6, value=booking['hora_fim'])
-        ws.cell(row=row_idx, column=7, value=booking['status'])
+        ws.cell(row=row_idx, column=4, value=booking.get('justificativa', ''))
+        ws.cell(row=row_idx, column=5, value=booking['data'])
+        ws.cell(row=row_idx, column=6, value=booking['hora_inicio'])
+        ws.cell(row=row_idx, column=7, value=booking['hora_fim'])
+        ws.cell(row=row_idx, column=8, value=booking['status'])
     
     # Ajustar largura das colunas
-    for col in ['A', 'B', 'C', 'D', 'E', 'F', 'G']:
+    for col in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']:
         ws.column_dimensions[col].width = 20
     
     # Salvar

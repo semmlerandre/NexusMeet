@@ -82,6 +82,11 @@ const Bookings = () => {
                     
                     <div>
                       <h3 className="text-xl font-semibold text-primary mb-1">{booking.room_name}</h3>
+                      {booking.justificativa && (
+                        <p className="text-sm text-slate-700 mb-2">
+                          <span className="font-medium">Justificativa:</span> {booking.justificativa}
+                        </p>
+                      )}
                       <div className="flex items-center gap-4 text-sm text-slate-600">
                         <div className="flex items-center gap-1">
                           <Calendar size={14} />

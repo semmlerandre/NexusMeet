@@ -27,7 +27,8 @@ const Rooms = () => {
     data_inicio: '',
     data_fim: '',
     hora_inicio: '',
-    hora_fim: ''
+    hora_fim: '',
+    justificativa: ''
   });
 
   useEffect(() => {
@@ -75,6 +76,29 @@ const Rooms = () => {
 
   const handleBookRoom = async (e) => {
     e.preventDefault();
+    const todayStr = new Date().toISOString().split('T')[0];
+    const endDate = bookingForm.data_fim || bookingForm.data_inicio;
+
+    if (!bookingForm.justificativa.trim()) {
+      toast.error('Informe um titulo ou justificativa para a reserva.');
+      return;
+    }
+
+    if (bookingForm.data_inicio < todayStr || endDate < todayStr) {
+      toast.error('Nao e permitido reservar datas anteriores ao dia atual.');
+      return;
+    }
+
+    if (endDate < bookingForm.data_inicio) {
+      toast.error('A data de inicio nao pode ser maior que a data fim.');
+      return;
+    }
+
+    if (bookingForm.hora_fim <= bookingForm.hora_inicio) {
+      toast.error('A hora fim deve ser maior que a hora inicio.');
+      return;
+    }
+
     try {
       const response = await api.post('/bookings', {
         room_id: selectedRoom.id,
@@ -83,7 +107,7 @@ const Rooms = () => {
       const result = response.data;
       toast.success(`${result.total} reserva(s) criada(s) com sucesso!`);
       setBookingDialogOpen(false);
-      setBookingForm({ data_inicio: '', data_fim: '', hora_inicio: '', hora_fim: '' });
+      setBookingForm({ data_inicio: '', data_fim: '', hora_inicio: '', hora_fim: '', justificativa: '' });
       setSelectedRoom(null);
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Erro ao criar reserva');
@@ -256,6 +280,18 @@ const Rooms = () => {
                 <p className="text-xs text-slate-500">
                   Deixe em branco para reservar apenas 1 dia. Preencha para reservar um período.
                 </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="justificativa">Titulo ou justificativa</Label>
+                <Input
+                  id="justificativa"
+                  type="text"
+                  value={bookingForm.justificativa}
+                  onChange={(e) => setBookingForm({ ...bookingForm, justificativa: e.target.value })}
+                  placeholder="Ex: Reuniao de planejamento semanal"
+                  required
+                  data-testid="booking-justificativa-input"
+                />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">

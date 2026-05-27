@@ -23,7 +23,11 @@ const Login = () => {
       toast.success('Login realizado com sucesso!');
       navigate('/dashboard');
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Erro ao fazer login');
+      if (!error.response) {
+        toast.error('Nao foi possivel conectar ao servidor. Verifique se o backend esta em execucao.');
+      } else {
+        toast.error(error.response?.data?.detail || 'Erro ao fazer login');
+      }
     } finally {
       setLoading(false);
     }

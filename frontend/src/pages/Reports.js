@@ -43,29 +43,49 @@ const Reports = () => {
   };
 
   const handleGenerateReport = async () => {
+    if (!filters.start_date || !filters.end_date) {
+      toast.error('Selecione as datas de in\u00edcio e fim para gerar o relat\u00f3rio.');
+      return;
+    }
+
+    if (filters.start_date > filters.end_date) {
+      toast.error('A data in\u00edcio n\u00e3o pode ser maior que a data fim.');
+      return;
+    }
+
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (filters.start_date) params.append('start_date', filters.start_date);
-      if (filters.end_date) params.append('end_date', filters.end_date);
+      params.append('start_date', filters.start_date);
+      params.append('end_date', filters.end_date);
       if (filters.user_id) params.append('user_id', filters.user_id);
       if (filters.room_id) params.append('room_id', filters.room_id);
 
       const response = await api.get(`/reports/bookings?${params.toString()}`);
       setReportData(response.data);
-      toast.success('Relatório gerado com sucesso!');
+      toast.success('Relat\u00f3rio gerado com sucesso!');
     } catch (error) {
-      toast.error('Erro ao gerar relatório');
+      toast.error('Erro ao gerar relat\u00f3rio');
     } finally {
       setLoading(false);
     }
   };
 
   const handleExportExcel = async () => {
+    if (!filters.start_date || !filters.end_date) {
+      toast.error('Selecione as datas de in\u00edcio e fim para exportar o relat\u00f3rio.');
+      return;
+    }
+
+    if (filters.start_date > filters.end_date) {
+      toast.error('A data in\u00edcio n\u00e3o pode ser maior que a data fim.');
+      return;
+    }
+
     try {
       const params = new URLSearchParams();
-      if (filters.start_date) params.append('start_date', filters.start_date);
-      if (filters.end_date) params.append('end_date', filters.end_date);
+      params.append('start_date', filters.start_date);
+      params.append('end_date', filters.end_date);
       if (filters.user_id) params.append('user_id', filters.user_id);
       if (filters.room_id) params.append('room_id', filters.room_id);
 
@@ -81,9 +101,9 @@ const Reports = () => {
       link.click();
       link.remove();
 
-      toast.success('Relatório exportado com sucesso!');
+      toast.success('Relat\u00f3rio exportado com sucesso!');
     } catch (error) {
-      toast.error('Erro ao exportar relatório');
+      toast.error('Erro ao exportar relat\u00f3rio');
     }
   };
 
@@ -98,11 +118,11 @@ const Reports = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-4xl font-bold text-primary">Relatórios</h1>
+            <h1 className="text-4xl font-bold text-primary">{'Relat\u00f3rios'}</h1>
             <p className="text-slate-600 mt-1">
               {podeVerTodos 
-                ? 'Gere relatórios completos de uso das salas' 
-                : 'Visualize relatórios das suas reservas'}
+                ? 'Gere relat\u00f3rios completos de uso das salas' 
+                : 'Visualize relat\u00f3rios das suas reservas'}
             </p>
           </div>
         </div>
@@ -116,7 +136,7 @@ const Reports = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="start_date">Data Início</Label>
+              <Label htmlFor="start_date">{'Data In\u00edcio'}</Label>
               <Input
                 id="start_date"
                 type="date"
@@ -140,7 +160,7 @@ const Reports = () => {
             {podeVerTodos && (
               <>
                 <div className="space-y-2">
-                  <Label htmlFor="user_filter">Usuário</Label>
+                  <Label htmlFor="user_filter">{'Usu\u00e1rio'}</Label>
                   <select
                     id="user_filter"
                     className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
@@ -148,7 +168,7 @@ const Reports = () => {
                     onChange={(e) => setFilters({ ...filters, user_id: e.target.value })}
                     data-testid="filter-user"
                   >
-                    <option value="">Todos os usuários</option>
+                    <option value="">{'Todos os usu\u00e1rios'}</option>
                     {users.map((u) => (
                       <option key={u.id} value={u.id}>
                         {u.nome}
@@ -185,7 +205,7 @@ const Reports = () => {
               data-testid="generate-report-button"
             >
               <BarChart3 className="mr-2 h-4 w-4" />
-              {loading ? 'Gerando...' : 'Gerar Relatório'}
+              {loading ? 'Gerando...' : 'Gerar Relat\u00f3rio'}
             </Button>
 
             {reportData && (
@@ -226,9 +246,10 @@ const Reports = () => {
                     <tr>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">ID</th>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Sala</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Usuário</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">{'Usu\u00e1rio'}</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Justificativa</th>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Data</th>
-                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Horário</th>
+                      <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">{'Hor\u00e1rio'}</th>
                       <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Status</th>
                     </tr>
                   </thead>
@@ -238,6 +259,7 @@ const Reports = () => {
                         <td className="px-4 py-3 text-sm text-slate-900">{booking.id}</td>
                         <td className="px-4 py-3 text-sm text-slate-900">{booking.room_name}</td>
                         <td className="px-4 py-3 text-sm text-slate-600">{booking.user_name}</td>
+                        <td className="px-4 py-3 text-sm text-slate-600">{booking.justificativa || '-'}</td>
                         <td className="px-4 py-3 text-sm text-slate-600">{formatDate(booking.data)}</td>
                         <td className="px-4 py-3 text-sm text-slate-600">
                           {booking.hora_inicio} - {booking.hora_fim}

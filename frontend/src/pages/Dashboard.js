@@ -24,14 +24,12 @@ const Dashboard = () => {
     total_users: 0,
     upcoming_bookings: []
   });
-  const [todayBookings, setTodayBookings] = useState([]);
+  const [myTodayBookings, setMyTodayBookings] = useState([]);
+  const [othersTodayBookings, setOthersTodayBookings] = useState([]);
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-
   const weekDays = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
   const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
@@ -43,18 +41,24 @@ const Dashboard = () => {
 
   const loadDashboardData = async () => {
     try {
-      const [statsRes, roomsRes, myBookingsRes] = await Promise.all([
+      const [statsRes, roomsRes, myBookingsRes, allBookingsRes] = await Promise.all([
         api.get('/dashboard/stats'),
         api.get('/rooms'),
-        api.get('/bookings/my')
+        api.get('/bookings/my'),
+        api.get('/bookings')
       ]);
 
       setStats(statsRes.data);
       setRooms(roomsRes.data);
       
       const todayStr = today.toISOString().split('T')[0];
-      const todayBookingsList = myBookingsRes.data.filter(b => b.data === todayStr);
-      setTodayBookings(todayBookingsList);
+      const myTodayBookingsList = myBookingsRes.data.filter((booking) => booking.data === todayStr);
+      const othersTodayBookingsList = allBookingsRes.data.filter(
+        (booking) => booking.data === todayStr && booking.user_id !== user?.id
+      );
+
+      setMyTodayBookings(myTodayBookingsList);
+      setOthersTodayBookings(othersTodayBookingsList);
 
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
@@ -65,6 +69,11 @@ const Dashboard = () => {
 
   const formatTime = (timeStr) => {
     return timeStr;
+  };
+
+  const getCurrentlyAvailableRoomsCount = () => {
+    if (!rooms || rooms.length === 0) return 0;
+    return rooms.filter((room) => getRoomStatus(room.id) === 'LIVRE').length;
   };
 
   const getRoomStatus = (roomId) => {
@@ -122,28 +131,28 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard
             icon={DoorOpen}
-            value={stats.rooms_available}
+            value={getCurrentlyAvailableRoomsCount()}
             label="Salas Disponíveis"
             bgColor="bg-blue-50"
             iconColor="text-blue-600"
           />
           <StatCard
             icon={Calendar}
-            value={stats.bookings_today}
+            value={othersTodayBookings.length}
             label="Reservas Hoje"
             bgColor="bg-emerald-50"
             iconColor="text-emerald-600"
           />
           <StatCard
             icon={Clock}
-            value={todayBookings.length}
+            value={myTodayBookings.length}
             label="Minhas Reservas Hoje"
             bgColor="bg-amber-50"
             iconColor="text-amber-600"
           />
           <StatCard
             icon={TrendingUp}
-            value={stats.my_bookings}
+            value={getCurrentlyAvailableRoomsCount()}
             label="Total Ativas"
             bgColor="bg-purple-50"
             iconColor="text-purple-600"
@@ -156,17 +165,17 @@ const Dashboard = () => {
           <Card className="p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-semibold text-slate-900">Reservas de Hoje</h2>
-              <span className="text-2xl font-bold text-blue-600">{todayBookings.length}</span>
+              <span className="text-2xl font-bold text-blue-600">{othersTodayBookings.length}</span>
             </div>
 
-            {todayBookings.length === 0 ? (
+            {othersTodayBookings.length === 0 ? (
               <div className="text-center py-12">
                 <Calendar className="mx-auto h-16 w-16 text-slate-300 mb-4" />
                 <p className="text-slate-500">Nenhuma reserva hoje</p>
               </div>
             ) : (
               <div className="space-y-3">
-                {todayBookings.map((booking) => (
+                {othersTodayBookings.map((booking) => (
                   <div
                     key={booking.id}
                     className="p-4 bg-slate-50 rounded-lg border border-slate-200"

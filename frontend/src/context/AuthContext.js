@@ -3,10 +3,11 @@ import axios from 'axios';
 
 const AuthContext = createContext(null);
 
-const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
+const defaultDevBackendUrl = process.env.NODE_ENV === 'development' ? 'http://localhost:8001' : '';
+const backendUrl = (process.env.REACT_APP_BACKEND_URL || defaultDevBackendUrl).replace(/\/$/, '');
 
 const api = axios.create({
-  baseURL: `${backendUrl}/api`,
+  baseURL: backendUrl ? `${backendUrl}/api` : '/api',
 });
 
 api.interceptors.request.use((config) => {
